@@ -1,18 +1,19 @@
-import React from 'react';
-import {SafeAreaView, StyleSheet, Text} from 'react-native';
+import React from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
+import HomeScreen from "./screens/HomeScreen";
+import PostMessageScreen from "./screens/PostMessageScreen";
 
-const App = () => {
+// Stack Navigator for navigating between screens
+const Stack = createStackNavigator();
+
+export default function App() {
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Thrive</Text>
-      <MoodAndSymptomInput />
-    </SafeAreaView>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="PostMessage" component={PostMessageScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {flex: 1, justifyContent: 'center', padding: 20},
-  title: {fontSize: 24, textAlign: 'center', marginBottom: 20},
-});
-
-export default App;
+}
