@@ -1,19 +1,25 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import HomeScreen from "./screens/HomeScreen";
 import PostMessageScreen from "./screens/PostMessageScreen";
+import ForumScreen from "./screens/ForumScreen";
 
-// Stack Navigator for navigating between screens
-const Stack = createStackNavigator();
+// Bottom Tab Navigator for Forum and Dashboard
+const Tab = createBottomTabNavigator();
+
+const DashboardScreen = () => {
+  return <HomeScreen />;
+};
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="PostMessage" component={PostMessageScreen} />
-      </Stack.Navigator>
+      <Tab.Navigator initialRouteName="Dashboard">
+        <Tab.Screen name="Thrive" component={DashboardScreen} />
+        <Tab.Screen name="Forum" component={ForumScreen} />
+      </Tab.Navigator>
     </NavigationContainer>
   );
 }
