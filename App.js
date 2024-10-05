@@ -1,6 +1,5 @@
 import React from 'react';
 import {SafeAreaView, StyleSheet, Text} from 'react-native';
-import MoodAndSymptomInput from './src/components/MoodAndSymptomInput';
 
 const App = () => {
   return (
