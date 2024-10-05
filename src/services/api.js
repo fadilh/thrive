@@ -5,7 +5,7 @@ export const getTherapyRecommendation = async userData => {
     const response = await api.post('/recommendation', userData);
     return response.data;
   } catch (error) {
-    console.error('Error getting therapy recommendation:', error);
+    console.error('Error:', error);
     throw error;
   }
 };
