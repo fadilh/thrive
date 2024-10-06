@@ -1,24 +1,23 @@
 from flask import Flask, request, jsonify
 import ollama
-from transformers import pipeline
+import tensorflow as tf
+import pandas as pd
 
 
 app = Flask(__name__)
 
 ollama_model = 'llama3.1'
 
-#model stuff yurr
-# model = tf.keras.models.load_model("model.keras")
+model = tf.keras.models.load_model("model.keras")
 
 toxic_classifier = pipeline("text-classification", model="unitary/toxic-bert")
 
-# vocab_size = 20000
-# tokenizer = tf.keras.preprocessing.text.Tokenizer(num_words=vocab_size, oov_token="<OOV>")
-# df = pd.read_csv('train.csv')
-# texts = df['comment_text'].values
-# tokenizer.fit_on_texts(texts) 
-
-# categories = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
+vocab_size = 20000
+tokenizer = tf.keras.preprocessing.text.Tokenizer(num_words=vocab_size, oov_token="<OOV>")
+df = pd.read_csv('train.csv')
+texts = df['comment_text'].values
+tokenizer.fit_on_texts(texts) 
+categories = ['toxic', 'severe_toxic', 'obscene', 'threat', 'insult', 'identity_hate']
 
 @app.route('/recommend', methods=['POST'])
 def recommend():
@@ -69,28 +68,25 @@ def validate():
     
     message = data.get("message")
     
-    # prediction = predict_comment(message)
+    prediction = predict_comment(message)
 
-    # total = 0
-    # for category, prob in prediction.items():
-    #     total += prob
-    #     print(f"{category}: {prob:.4f}")
+    total = 0
+    for category, prob in prediction.items():
+        total += prob
+        print(f"{category}: {prob:.4f}")
 
-    result = toxic_classifier(message)
-    score = result[0]['score']
-    return jsonify({'output': f'{score < 0.10}'})
+    return jsonify({'output': f'{total < 0.10}'})
 
     
-# def predict_comment(comment):
-#     sequence = tokenizer.texts_to_sequences([comment])
-#     padded_sequence = tf.keras.preprocessing.sequence.pad_sequences(sequence, maxlen=150, padding='post', truncating='post') 
+def predict_comment(comment):
+    sequence = tokenizer.texts_to_sequences([comment])
+    padded_sequence = tf.keras.preprocessing.sequence.pad_sequences(sequence, maxlen=150, padding='post', truncating='post') 
 
-#     predictions = model.predict(padded_sequence)[0]
+    predictions = model.predict(padded_sequence)[0]
 
-#     result = {categories[i]: predictions[i] for i in range(len(categories))}
+    result = {categories[i]: predictions[i] for i in range(len(categories))}
     
-#     return result
+    return result
 
 if __name__ == '__main__':
-    # app.run(host='0.0.0.0', port=5001)
     app.run(debug=False)
