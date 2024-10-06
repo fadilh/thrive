@@ -4,9 +4,6 @@ import { ObjectId } from "mongodb"; // For working with MongoDB ObjectIds
 
 const router = express.Router();
 
-////////// Messages CRUD //////////
-
-// Create a new message (POST)
 router.post("/messages", async (req, res) => {
   try {
     const message = {
