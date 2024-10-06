@@ -61,7 +61,7 @@ const Message = ({ messageData, addReply, handleLike }) => {
 
   return (
     <View style={styles.messageContainer}>
-      <Text style={styles.messageUser}>{messageData.user_id}</Text>
+      <Text style={styles.messageUser}>Anonymous User</Text>
       <Text style={styles.messageText}>{messageData.message}</Text>
       <View style={styles.likeContainer}>
         <Text style={styles.likeCount}>{messageData.likes}</Text>
@@ -103,7 +103,7 @@ const Message = ({ messageData, addReply, handleLike }) => {
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item }) => (
             <View style={styles.replyContainer}>
-              <Text style={styles.replyUser}>{item.user_id}</Text>
+              <Text style={styles.replyUser}>Anonymous User</Text>
               <Text style={styles.replyText}>{item.message}</Text>
               <Text style={styles.replyDate}>{item.date}</Text>
             </View>
@@ -118,18 +118,19 @@ const ForumScreen = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
 
+  const fetchMessages = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:5050/api/messages/" + userID
+      ); // Fetch messages from the backend
+      setMessages(response.data);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
+  };
+
   // Fetch messages from MongoDB when the component mounts
   useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:5050/api/messages/" + userID
-        ); // Fetch messages from the backend
-        setMessages(response.data); // Set messages from the API response
-      } catch (error) {
-        console.error("Error fetching messages:", error);
-      }
-    };
     fetchMessages();
   }, []);
 
@@ -176,6 +177,7 @@ const ForumScreen = () => {
       // Add the newly created message to the local state
       setMessages((prevMessages) => [response.data, ...prevMessages]);
       setNewMessage(""); // Clear the input field
+      fetchMessages();
     } catch (error) {
       console.error("Error posting message:", error);
     }
@@ -197,7 +199,7 @@ const ForumScreen = () => {
     const reply = {
       user_id: userID,
       date: `${formattedDate}, ${formattedTime}`,
-      message: replyText,
+      message: replyText, // Changed to 'message'
     };
 
     try {
@@ -207,18 +209,8 @@ const ForumScreen = () => {
         reply
       );
 
-      // Update the local state with the new reply
-      const updatedMessages = messages.map((message) => {
-        if (message._id === messageId) {
-          return {
-            ...message,
-            replies: [...message.replies, reply],
-          };
-        }
-        return message;
-      });
-
-      setMessages(updatedMessages);
+      // Fetch the updated messages
+      fetchMessages(); // Ensure that you refetch the messages so that the updated replies are shown
     } catch (error) {
       console.error("Error adding reply:", error);
     }
