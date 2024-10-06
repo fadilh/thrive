@@ -24,6 +24,6 @@ async function connectDB() {
 // Call the function to connect to MongoDB
 connectDB();
 
-const db = client.db('your_database_name');  // Replace with your DB name
+const db = client.db('ThriveDB');  // Replace with your DB name
 
 export default db;
