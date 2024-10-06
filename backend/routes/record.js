@@ -1,88 +1,66 @@
-const express = require('express');
-const db = require('../db/connection.js');
-const { ObjectId } = require('mongodb');
+import express from 'express';
+import db from '../db/connection.js';  // Import the connected database
+import { ObjectId } from 'mongodb';
 
 const router = express.Router();
 
-// Get a list of all records
-router.get('/', async (req, res) => {
+// Add a new message with replies
+router.post('/messages', async (req, res) => {
   try {
-    const collection = await db.collection('records');
-    const records = await collection.find({}).toArray();
-    res.status(200).json(records);
-  } catch (error) {
-    res.status(500).send('Error retrieving records');
-  }
-});
-
-// Get a single record by ID
-router.get('/:id', async (req, res) => {
-  try {
-    const collection = await db.collection('records');
-    const query = { _id: new ObjectId(req.params.id) };
-    const result = await collection.findOne(query);
-
-    if (!result) {
-      res.status(404).send('Not found');
-    } else {
-      res.status(200).json(result);
-    }
-  } catch (error) {
-    res.status(500).send('Error retrieving the record');
-  }
-});
-
-// Create a new record
-router.post('/', async (req, res) => {
-  try {
-    const newDocument = {
-      name: req.body.name,
-      position: req.body.position,
-      level: req.body.level,
+    const message = {
+      user_id: req.body.user_id,
+      timestamp: req.body.timestamp,
+      message: req.body.message,
+      replies: req.body.replies || []  // Replies as an array of objects
     };
-    const collection = await db.collection('records');
-    const result = await collection.insertOne(newDocument);
+    const messagesCollection = db.collection('messages');
+    const result = await messagesCollection.insertOne(message);
     res.status(201).json(result);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error adding record');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error adding message');
   }
 });
 
-// Update a record by ID
-router.patch('/:id', async (req, res) => {
+// Retrieve all messages for a specific user
+router.get('/messages/:user_id', async (req, res) => {
   try {
-    const query = { _id: new ObjectId(req.params.id) };
-    const updates = {
-      $set: {
-        name: req.body.name,
-        position: req.body.position,
-        level: req.body.level,
-      },
+    const messagesCollection = db.collection('messages');
+    const userMessages = await messagesCollection.find({ user_id: req.params.user_id }).toArray();
+    res.status(200).json(userMessages);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error retrieving messages');
+  }
+});
+
+// Add a new appointment
+router.post('/appointments', async (req, res) => {
+  try {
+    const appointment = {
+      user_id: req.body.user_id,
+      appointment_date: req.body.appointment_date,
+      description: req.body.description
     };
-
-    const collection = await db.collection('records');
-    const result = await collection.updateOne(query, updates);
-    res.status(200).json(result);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error updating record');
+    const appointmentsCollection = db.collection('appointments');
+    const result = await appointmentsCollection.insertOne(appointment);
+    res.status(201).json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error adding appointment');
   }
 });
 
-// Delete a record by ID
-router.delete('/:id', async (req, res) => {
+// Retrieve all appointments for a specific user
+router.get('/appointments/:user_id', async (req, res) => {
   try {
-    const query = { _id: new ObjectId(req.params.id) };
-
-    const collection = db.collection('records');
-    const result = await collection.deleteOne(query);
-
-    res.status(200).json(result);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error deleting record');
+    const appointmentsCollection = db.collection('appointments');
+    const userAppointments = await appointmentsCollection.find({ user_id: req.params.user_id }).toArray();
+    res.status(200).json(userAppointments);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error retrieving appointments');
   }
 });
 
-module.exports = router;
+export default router;

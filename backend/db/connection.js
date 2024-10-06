@@ -1,8 +1,10 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
-require('dotenv').config();
+import { MongoClient, ServerApiVersion } from 'mongodb';
+import dotenv from 'dotenv';
 
-const URI = process.env.ATLAS_URI;
-const client = new MongoClient(process.env.ATLAS_URI, {
+dotenv.config();  // Load environment variables from .env file
+
+const URI = process.env.ATLAS_URI || '';
+const client = new MongoClient(URI, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
@@ -10,35 +12,18 @@ const client = new MongoClient(process.env.ATLAS_URI, {
   },
 });
 
-async function run() {
-    try {
-      // Connect the client to the server	(optional starting in v4.7)
-      await client.connect();
-      // Send a ping to confirm a successful connection
-      await client.db("admin").command({ ping: 1 });
-      console.log("Pinged your deployment. You successfully connected to MongoDB!");
-    } finally {
-      // Ensures that the client will close when you finish/error
-      await client.close();
-    }
-  }
-  run().catch(console.dir);
-
-/*async function connectDB() {
+async function connectDB() {
   try {
-    // Connect the client to the server
     await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db('admin').command({ ping: 1 });
     console.log('Connected to MongoDB!');
   } catch (err) {
-    console.error('Connection error:', err);
+    console.error('MongoDB connection error:', err);
   }
 }
 
 // Call the function to connect to MongoDB
 connectDB();
 
-const db = client.db('employees');
+const db = client.db('your_database_name');  // Replace with your DB name
 
-module.exports = db;*/
+export default db;
