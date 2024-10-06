@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import axios from "axios";  // Use Axios for HTTP requests
+import axios from "axios"; // Use Axios for HTTP requests
 
 // Sample User ID
 const userID = "user123";
@@ -24,12 +24,12 @@ const validateMessage = async (message) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        data: { message },  // Send the message to validate
+        data: { message }, // Send the message to validate
       }),
     });
 
     const result = await response.json();
-    return result.output === "True";  // Return True if valid
+    return result.output === "True"; // Return True if valid
   } catch (error) {
     console.error("Error validating message:", error);
     return false;
@@ -44,7 +44,7 @@ const Message = ({ messageData, addReply, handleLike }) => {
   // Function to handle adding a reply
   const handleAddReply = async () => {
     if (replyText.trim() === "") {
-      return;  // Don't allow empty replies
+      return; // Don't allow empty replies
     }
 
     const isValid = await validateMessage(replyText);
@@ -54,9 +54,9 @@ const Message = ({ messageData, addReply, handleLike }) => {
       return;
     }
 
-    addReply(messageData._id, replyText);  // Use MongoDB's ObjectId (_id)
-    setReplyText("");  // Clear input after reply
-    setShowReplyInput(false);  // Hide input after reply
+    addReply(messageData._id, replyText); // Use MongoDB's ObjectId (_id)
+    setReplyText(""); // Clear input after reply
+    setShowReplyInput(false); // Hide input after reply
   };
 
   return (
@@ -122,8 +122,10 @@ const ForumScreen = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await axios.get("http://localhost:5050/api/messages");  // Fetch messages from the backend
-        setMessages(response.data);  // Set messages from the API response
+        const response = await axios.get(
+          "http://localhost:5050/api/messages/" + userID
+        ); // Fetch messages from the backend
+        setMessages(response.data); // Set messages from the API response
       } catch (error) {
         console.error("Error fetching messages:", error);
       }
@@ -134,7 +136,7 @@ const ForumScreen = () => {
   // Function to handle posting a new message
   const handlePostMessage = async () => {
     if (newMessage.trim() === "") {
-      return;  // Don't allow empty messages
+      return; // Don't allow empty messages
     }
 
     const isValid = await validateMessage(newMessage);
@@ -166,11 +168,14 @@ const ForumScreen = () => {
 
     try {
       // POST the new message to the backend (stores it in MongoDB)
-      const response = await axios.post("http://localhost:5050/api/messages", newEntry);
+      const response = await axios.post(
+        "http://localhost:5050/api/messages",
+        newEntry
+      );
 
       // Add the newly created message to the local state
       setMessages((prevMessages) => [response.data, ...prevMessages]);
-      setNewMessage("");  // Clear the input field
+      setNewMessage(""); // Clear the input field
     } catch (error) {
       console.error("Error posting message:", error);
     }
@@ -197,7 +202,10 @@ const ForumScreen = () => {
 
     try {
       // PATCH request to add a reply to the message
-      await axios.patch(`http://localhost:5050/api/messages/${messageId}/reply`, reply);
+      await axios.patch(
+        `http://localhost:5050/api/messages/${messageId}/reply`,
+        reply
+      );
 
       // Update the local state with the new reply
       const updatedMessages = messages.map((message) => {
@@ -302,15 +310,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   messageFooter: {
-    flexDirection: "column",  // Stack the like button and date vertically
-    alignItems: "flex-end",  // Align both to the right
+    flexDirection: "column", // Stack the like button and date vertically
+    alignItems: "flex-end", // Align both to the right
     marginTop: 4,
   },
   likeContainer: {
-    flexDirection: "row",  // Place the count and like button side by side
+    flexDirection: "row", // Place the count and like button side by side
     alignItems: "center",
-    justifyContent: "flex-end",  // Align them to the right
-    marginBottom: 4,  // Space between the like button and date
+    justifyContent: "flex-end", // Align them to the right
+    marginBottom: 4, // Space between the like button and date
   },
   likeCount: {
     fontSize: 16,
@@ -318,12 +326,12 @@ const styles = StyleSheet.create({
   },
   likeButton: {
     fontSize: 20,
-    marginLeft: 4,  // Add space between count and button
+    marginLeft: 4, // Add space between count and button
   },
   messageDate: {
     fontSize: 12,
     color: "#888",
-    textAlign: "right",  // Align date to the right
+    textAlign: "right", // Align date to the right
   },
   replyButton: {
     color: "#007BFF",
