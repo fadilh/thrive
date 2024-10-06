@@ -26,7 +26,7 @@ const PostMessageScreen = ({ route, navigation }) => {
     <SafeAreaView style={styles.container}>
       <TextInput
         style={styles.input}
-        placeholder="Type your message..."
+        placeholder="Type your ..."
         multiline
         value={newMessage}
         onChangeText={setNewMessage}
