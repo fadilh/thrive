@@ -10,11 +10,12 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios"; // Use Axios for HTTP requests
 
 // Sample User ID
 const userID = "user123";
 
+// Validate message to prevent hurtful or offensive content
 const validateMessage = async (message) => {
   try {
     const response = await fetch("http://127.0.0.1:5000/validate-message", {
@@ -28,14 +29,14 @@ const validateMessage = async (message) => {
     });
 
     const result = await response.json();
-    return result.output === "True";
+    return result.output === "True"; // Return True if valid
   } catch (error) {
     console.error("Error validating message:", error);
     return false;
   }
 };
 
-// Message Component
+// Message Component to render each message
 const Message = ({ messageData, addReply, handleLike }) => {
   const [replyText, setReplyText] = useState("");
   const [showReplyInput, setShowReplyInput] = useState(false);
@@ -53,37 +54,24 @@ const Message = ({ messageData, addReply, handleLike }) => {
       return;
     }
 
-    addReply(messageData.id, replyText);
+    addReply(messageData._id, replyText); // Use MongoDB's ObjectId (_id)
     setReplyText(""); // Clear input after reply
     setShowReplyInput(false); // Hide input after reply
   };
 
   return (
     <View style={styles.messageContainer}>
-      <Text style={styles.messageUser}>{messageData.userID}</Text>
+      <Text style={styles.messageUser}>{messageData.user_id}</Text>
       <Text style={styles.messageText}>{messageData.message}</Text>
       <View style={styles.likeContainer}>
         <Text style={styles.likeCount}>{messageData.likes}</Text>
-        <TouchableOpacity onPress={() => handleLike(messageData.id)}>
+        <TouchableOpacity onPress={() => handleLike(messageData._id)}>
           <Text style={styles.likeButton}>❤️</Text>
         </TouchableOpacity>
       </View>
-      {/* <Text style={styles.messageDate}>{messageData.date}</Text> */}
-
-      {/* Like Button with Heart Emoji and Like Count */}
       <View style={styles.likeContainer}>
         <Text style={styles.messageDate}>{messageData.date}</Text>
       </View>
-      {/* <View style={styles.messageFooter}>
-        <View style={styles.likeContainer}>
-          <Text style={styles.likeCount}>{messageData.likes}</Text>
-          <TouchableOpacity onPress={() => handleLike(messageData.id)}>
-            <Text style={styles.likeButton}>❤️</Text>
-          </TouchableOpacity>
-        </View>
-
-        <Text style={styles.messageDate}>{messageData.date}</Text>
-      </View> */}
 
       {/* Reply Button */}
       <TouchableOpacity onPress={() => setShowReplyInput(!showReplyInput)}>
@@ -115,7 +103,7 @@ const Message = ({ messageData, addReply, handleLike }) => {
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item }) => (
             <View style={styles.replyContainer}>
-              <Text style={styles.replyUser}>{item.userID}</Text>
+              <Text style={styles.replyUser}>{item.user_id}</Text>
               <Text style={styles.replyText}>{item.message}</Text>
               <Text style={styles.replyDate}>{item.date}</Text>
             </View>
@@ -130,12 +118,16 @@ const ForumScreen = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
 
-  // Fetch messages from AsyncStorage when the component mounts
+  // Fetch messages from MongoDB when the component mounts
   useEffect(() => {
     const fetchMessages = async () => {
-      const storedMessages = await AsyncStorage.getItem("forumMessages");
-      if (storedMessages) {
-        setMessages(JSON.parse(storedMessages));
+      try {
+        const response = await axios.get(
+          "http://localhost:5050/api/messages/" + userID
+        ); // Fetch messages from the backend
+        setMessages(response.data); // Set messages from the API response
+      } catch (error) {
+        console.error("Error fetching messages:", error);
       }
     };
     fetchMessages();
@@ -154,7 +146,7 @@ const ForumScreen = () => {
       return;
     }
 
-    // Proceed with posting the message if valid
+    // Format the date
     const date = new Date();
     const formattedDate = date.toLocaleDateString("en-US", {
       month: "short",
@@ -167,22 +159,26 @@ const ForumScreen = () => {
     });
 
     const newEntry = {
-      id: Math.random().toString(),
-      userID,
-      date: `${formattedDate}, ${formattedTime}`,
+      user_id: userID,
       message: newMessage,
+      date: `${formattedDate}, ${formattedTime}`,
       replies: [],
       likes: 0,
     };
 
-    const updatedMessages = [...messages, newEntry];
-    setMessages(updatedMessages);
-    setNewMessage(""); // Clear input after posting
+    try {
+      // POST the new message to the backend (stores it in MongoDB)
+      const response = await axios.post(
+        "http://localhost:5050/api/messages",
+        newEntry
+      );
 
-    await AsyncStorage.setItem(
-      "forumMessages",
-      JSON.stringify(updatedMessages)
-    );
+      // Add the newly created message to the local state
+      setMessages((prevMessages) => [response.data, ...prevMessages]);
+      setNewMessage(""); // Clear the input field
+    } catch (error) {
+      console.error("Error posting message:", error);
+    }
   };
 
   // Function to handle adding a reply to a specific message
@@ -199,56 +195,63 @@ const ForumScreen = () => {
     });
 
     const reply = {
-      userID,
+      user_id: userID,
       date: `${formattedDate}, ${formattedTime}`,
       message: replyText,
     };
 
-    const updatedMessages = messages.map((message) => {
-      if (message.id === messageId) {
-        return {
-          ...message,
-          replies: [...message.replies, reply],
-        };
-      }
-      return message;
-    });
+    try {
+      // PATCH request to add a reply to the message
+      await axios.patch(
+        `http://localhost:5050/api/messages/${messageId}/reply`,
+        reply
+      );
 
-    setMessages(updatedMessages);
+      // Update the local state with the new reply
+      const updatedMessages = messages.map((message) => {
+        if (message._id === messageId) {
+          return {
+            ...message,
+            replies: [...message.replies, reply],
+          };
+        }
+        return message;
+      });
 
-    // Save updated messages with replies to AsyncStorage
-    await AsyncStorage.setItem(
-      "forumMessages",
-      JSON.stringify(updatedMessages)
-    );
+      setMessages(updatedMessages);
+    } catch (error) {
+      console.error("Error adding reply:", error);
+    }
   };
 
   // Function to handle liking a message
   const handleLike = async (messageId) => {
-    const updatedMessages = messages.map((message) => {
-      if (message.id === messageId) {
-        return {
-          ...message,
-          likes: message.likes + 1,
-        };
-      }
-      return message;
-    });
+    try {
+      // PATCH request to increment the likes for the message
+      await axios.patch(`http://localhost:5050/api/messages/${messageId}/like`);
 
-    setMessages(updatedMessages);
+      // Update the local state with the new like count
+      const updatedMessages = messages.map((message) => {
+        if (message._id === messageId) {
+          return {
+            ...message,
+            likes: message.likes + 1,
+          };
+        }
+        return message;
+      });
 
-    // Save updated messages with likes to AsyncStorage
-    await AsyncStorage.setItem(
-      "forumMessages",
-      JSON.stringify(updatedMessages)
-    );
+      setMessages(updatedMessages);
+    } catch (error) {
+      console.error("Error liking message:", error);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
         data={messages}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <Message
             messageData={item}
@@ -311,30 +314,25 @@ const styles = StyleSheet.create({
     alignItems: "flex-end", // Align both to the right
     marginTop: 4,
   },
-
   likeContainer: {
     flexDirection: "row", // Place the count and like button side by side
     alignItems: "center",
     justifyContent: "flex-end", // Align them to the right
     marginBottom: 4, // Space between the like button and date
   },
-
   likeCount: {
     fontSize: 16,
     color: "#333",
   },
-
   likeButton: {
     fontSize: 20,
     marginLeft: 4, // Add space between count and button
   },
-
   messageDate: {
     fontSize: 12,
     color: "#888",
     textAlign: "right", // Align date to the right
   },
-
   replyButton: {
     color: "#007BFF",
     marginTop: 4,
