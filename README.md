@@ -36,3 +36,34 @@ cd thrive
 ```
 
 2.	Install dependencies for the back-end:
+```
+cd backend
+npm install
+```
+
+3.	Install dependencies for the front-end:
+```
+cd frontend
+npm install
+```
+
+4.	Set up your MongoDB connection:
+In the backend directory, create a .env file and add your MongoDB connection string:
+```MONGO_URI=your_mongo_db_connection_string```
+
+5. Start the back-end server:
+```
+cd backend
+npm start
+```
+
+6. Start the front-end application
+```
+cd frontend
+npm start
+```
+
+Usage
+
+•	Launch the mobile app on your emulator or device.
+•	Navigate through the available features to track your fitness, access mental health resources, schedule telemedicine appointments, or join the anonymous peer support forums.
